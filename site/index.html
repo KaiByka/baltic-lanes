@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Baltic Lanes — Twenty years of Baltic shipping</title>
+    <meta
+      name="description"
+      content="An animated map of 20 years of Baltic Sea shipping (2006–2026), built from the Danish Maritime Authority's open AIS archive. Aggregates only — no individual vessel tracking."
+    />
+    <meta property="og:title" content="Baltic Lanes — Twenty years of Baltic shipping" />
+    <meta property="og:description" content="An animated map of 20 years of Baltic Sea shipping, from 3 TB of open AIS data." />
+    <meta property="og:type" content="website" />
+    <meta name="theme-color" content="#040a13" />
+    <!-- BASEMAP_INLINE -->
+    <script type="module">
+      // Early paint: land + graticule on the 2D underlay canvas before the
+      // maplibre bundle has downloaded/evaluated, so the map is visible fast.
+      // The basemap GeoJSON is inlined above (window.__BASEMAP__), so no fetch
+      // is needed. Keep CENTER/ZOOM and the mercator helpers in sync with
+      // src/view.ts. src/land.ts takes over with exact map projections once
+      // the map is up.
+      const CENTER = [19, 58.3];
+      const ZOOM = 3.4;
+      const mercX = (lon) => (lon + 180) / 360;
+      const mercY = (lat) => {
+        const r = (lat * Math.PI) / 180;
+        return (1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2;
+      };
+      const project = (lon, lat, w, h) => {
+        const world = 256 * 2 ** ZOOM;
+        return [
+          (mercX(lon) - mercX(CENTER[0])) * world + w / 2,
+          (mercY(lat) - mercY(CENTER[1])) * world + h / 2,
+        ];
+      };
+      const canvas = document.getElementById('land');
+      const ctx = canvas && canvas.getContext('2d');
+      if (ctx && window.__BASEMAP__) {
+        const polys = window.__BASEMAP__.land.features[0].geometry.coordinates;
+        const lines = window.__BASEMAP__.grat.features[0].geometry.coordinates;
+        const draw = () => {
+          const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+          const w = canvas.clientWidth;
+          const h = canvas.clientHeight;
+          if (!w || !h) return;
+          if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
+            canvas.width = Math.round(w * dpr);
+            canvas.height = Math.round(h * dpr);
+          }
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          ctx.clearRect(0, 0, w, h);
+          ctx.beginPath();
+          for (const poly of polys) {
+            for (const ring of poly) {
+              ring.forEach(([lon, lat], i) => {
+                const [x, y] = project(lon, lat, w, h);
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+              });
+              ctx.closePath();
+            }
+          }
+          ctx.fillStyle = '#16222f';
+          ctx.fill('evenodd');
+          ctx.strokeStyle = '#2c4257';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+          ctx.beginPath();
+          for (const line of lines) {
+            line.forEach(([lon, lat], i) => {
+              const [x, y] = project(lon, lat, w, h);
+              if (i === 0) ctx.moveTo(x, y);
+              else ctx.lineTo(x, y);
+            });
+          }
+          ctx.strokeStyle = '#101f30';
+          ctx.lineWidth = 0.6;
+          ctx.stroke();
+        };
+        draw();
+        window.addEventListener('resize', draw);
+      }
+    </script>
+    <script type="module" src="./src/main.ts" fetchpriority="high"></script>
+  </head>
+  <body>
+    <div id="map" aria-label="Map of Baltic Sea shipping"><canvas id="land"></canvas></div>
+
+    <header class="topbar">
+      <div id="chips" class="chips" role="group" aria-label="Vessel group filter"></div>
+      <nav class="actions" aria-label="Site actions">
+        <button id="btn-share" type="button">Share</button>
+        <button id="btn-video" type="button" disabled title="Share video arrives with the data release">Video</button>
+        <button id="btn-embed" type="button" disabled title="Embeddable page arrives with the scenes release">Embed</button>
+        <a id="btn-about" href="./about.html">About</a>
+      </nav>
+    </header>
+
+    <aside id="caption" class="caption" hidden></aside>
+
+    <div class="controls" id="controls">
+      <button id="btn-play" type="button" disabled title="Playback starts once data is loaded" aria-label="Play">
+        <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M4 2.5v11l9-5.5z" fill="currentColor"/></svg>
+      </button>
+      <input id="slider" type="range" min="0" max="251" step="1" value="0" disabled aria-label="Month" />
+      <span id="month-label" class="month-label">January 2006</span>
+      <select id="speed" disabled aria-label="Playback speed">
+        <option value="1">1×</option>
+        <option value="2">2×</option>
+        <option value="4" selected>4×</option>
+      </select>
+    </div>
+
+    <div data-footer></div>
+  </body>
+</html>

@@ -1,26 +1,27 @@
-# Baltic Lanes — build orchestration
-# Everything below is a target for coding agents to implement (see AGENTS.md, docs/).
-# This stub exists so the contract is runnable from day one.
+# Baltic Lanes — build orchestration (contract: AGENTS.md, specs: docs/)
 
-.PHONY: help validate pipeline site render clean
+.PHONY: help validate pipeline site render basemap clean
 
 help:
-	@echo "validate  - run QA checks (data budgets, determinism, Lighthouse)"
-	@echo "pipeline  - run full data pipeline (mirror must already be on disk)"
+	@echo "validate  - build the site and run QA gates (budgets, Lighthouse)"
 	@echo "site      - build the static site into site/dist/"
+	@echo "basemap   - regenerate self-hosted Natural Earth basemap assets"
+	@echo "pipeline  - run full data pipeline (mirror must already be on disk)"
 	@echo "render    - render share MP4s into site/press/"
 	@echo "clean     - remove build outputs (never raw mirror data)"
 
-validate:
-	@echo "Not implemented yet: first pipeline sprint task is to implement this target."
-	@exit 1
+site:
+	npm --prefix site ci --no-audit --no-fund
+	npm --prefix site run build
+
+validate: site
+	node site/scripts/validate.mjs
+
+basemap:
+	node site/scripts/build-basemap.mjs
 
 pipeline:
 	@echo "Not implemented yet: see docs/pipeline.md stages 1-6."
-	@exit 1
-
-site:
-	@echo "Not implemented yet: see docs/frontend.md"
 	@exit 1
 
 render:

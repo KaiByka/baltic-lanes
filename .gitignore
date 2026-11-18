@@ -4,3 +4,4 @@ baltic-lanes-scaffold.tar.gz
 # Build outputs
 site/dist/
 site/press/
+site/node_modules/

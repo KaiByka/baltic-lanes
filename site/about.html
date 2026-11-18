@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>About — Baltic Lanes</title>
+    <meta
+      name="description"
+      content="What Baltic Lanes is, where the data comes from, and how it was aggregated. Data: Danish Maritime Authority open AIS archive."
+    />
+    <meta name="theme-color" content="#040a13" />
+    <script type="module" src="./src/about.ts"></script>
+  </head>
+  <body class="page">
+    <main class="prose">
+      <p class="back"><a href="./index.html">← Back to the map</a></p>
+      <h1>About Baltic Lanes</h1>
+
+      <h2>What this is</h2>
+      <p>
+        Baltic Lanes is an animated map of twenty years of shipping in the Baltic Sea (2006–2026).
+        Every dot of light on the sea is an aggregate of thousands of position reports — never an
+        individual vessel. There is no vessel lookup, no tracking, and no way to identify a boat.
+      </p>
+
+      <h2>The data</h2>
+      <p>
+        AIS (Automatic Identification System) is the radio system ships use to broadcast their position,
+        course and speed. The Danish Maritime Authority publishes the AIS traffic it receives for Danish
+        waters as open data at <a href="https://aisdata.ais.dk">aisdata.ais.dk</a> — daily files back to
+        2006, roughly 3 TB in total, covering the Baltic Sea and the Danish straits. We publish
+        <strong>aggregates only</strong> (density grids, counts, flows); raw AIS files are never
+        redistributed.
+      </p>
+
+      <h2>Method</h2>
+      <p>
+        Messages are validated against the Baltic bounding box, de-duplicated, classified into six vessel
+        groups (tanker, cargo, passenger/ferry, cruise, fishing, pleasure craft) and aggregated onto a ~1 km
+        grid, per month and per group. The full methodology, QA numbers and license notes are documented in
+        the project repository and land here with the data release.
+      </p>
+
+      <h2>Known limitations</h2>
+      <p>
+        Class B (mostly leisure) transponders are underrepresented — not every sailboat carries one.
+        Coverage reflects the Danish Maritime Authority's receiving area. Counts are message counts,
+        not unique ships, unless stated otherwise.
+      </p>
+
+      <h2>Attribution</h2>
+      <ul>
+        <li>Data: <a href="https://aisdata.ais.dk">Danish Maritime Authority</a> (aisdata.ais.dk), published as aggregates only.</li>
+        <li>Coastline &amp; land: <a href="https://www.naturalearthdata.com">Natural Earth</a> (public domain).</li>
+        <li>Map rendering: <a href="https://maplibre.org">MapLibre GL JS</a> (BSD) and <a href="https://deck.gl">deck.gl</a> (BSD/Apache), bundled at build time.</li>
+      </ul>
+
+      <h2>Analytics</h2>
+      <p>
+        This site uses a cookieless GoatCounter pageview counter. No cookies, no fingerprinting, no
+        third-party tracking.
+      </p>
+
+      <p class="builtby">Built by the maker of <a href="https://marespot.com">MareSpot</a>.</p>
+    </main>
+    <div data-footer></div>
+  </body>
+</html>
