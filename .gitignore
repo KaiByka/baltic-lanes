@@ -1,0 +1,6 @@
+# Source scaffold archive (contents extracted and committed directly)
+baltic-lanes-scaffold.tar.gz
+
+# Build outputs
+site/dist/
+site/press/
