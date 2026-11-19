@@ -33,6 +33,16 @@ export function monthLabel(month: number): string {
   return `${MONTH_NAMES[month % 12]} ${y}`;
 }
 
+export function monthKey(month: number): string {
+  const y = FIRST_YEAR + Math.floor(month / 12);
+  return `${y}-${String(month % 12 + 1).padStart(2, '0')}`;
+}
+
+export function monthIndexOf(key: string): number {
+  const [y, m] = key.split('-').map(Number);
+  return (y - FIRST_YEAR) * 12 + (m - 1);
+}
+
 export function parseHash(hash: string = window.location.hash): State {
   const p = new URLSearchParams(hash.replace(/^#/, ''));
   const m = Number(p.get('m'));

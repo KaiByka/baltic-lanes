@@ -31,7 +31,7 @@ function inlineCss(): Plugin {
       const inlined = new Set<string>();
       for (const file of htmlFiles) {
         const css: string[] = [];
-        file.source = file.source.replace(/<link rel="stylesheet"[^>]*>/g, (tag: string) => {
+        file.source = String(file.source).replace(/<link rel="stylesheet"[^>]*>/g, (tag: string) => {
           const m = tag.match(/href="([^"]+)"/);
           const cssFile = m && bundle[m[1].replace(/^\.\//, '')];
           if (cssFile && cssFile.type === 'asset' && cssFile.fileName.endsWith('.css')) {
@@ -42,10 +42,11 @@ function inlineCss(): Plugin {
           return tag;
         });
         if (css.length) {
-          file.source = file.source.replace('</head>', `<style>${css.join('')}</style></head>`);
+          file.source = String(file.source).replace('</head>', `<style>${css.join('')}</style></head>`);
         }
       }
-      for (const name of inlined) delete bundle[name];
+      // keep the css assets in the bundle: vite preloads the css of lazy
+      // chunks and a deleted file would 404 and break the dynamic import
     },
   };
 }
@@ -55,10 +56,17 @@ export default defineConfig({
   // Relative base so the same build works at baltic.marespot.com/ and at
   // <user>.github.io/<repo>/ (see README "Custom domain setup").
   base: './',
+  // The deck.gl worker is a single self-contained chunk: luma.gl's internal
+  // re-exports break when rollup splits them across worker chunks.
+  worker: {
+    format: 'es',
+    rollupOptions: { output: { inlineDynamicImports: true } },
+  },
   build: {
     outDir: 'dist',
     emptyOutDir: true,
     chunkSizeWarningLimit: 1100,
+    manifest: true, // dist/.vite/manifest.json — validate.mjs uses it to prove deck.gl is lazy
     rollupOptions: {
       input: {
         index: fileURLToPath(new URL('./index.html', import.meta.url)),

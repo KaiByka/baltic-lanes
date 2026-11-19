@@ -17,18 +17,28 @@
       // Early paint: land + graticule on the 2D underlay canvas before the
       // maplibre bundle has downloaded/evaluated, so the map is visible fast.
       // The basemap GeoJSON is inlined above (window.__BASEMAP__), so no fetch
-      // is needed. Keep CENTER/ZOOM and the mercator helpers in sync with
-      // src/view.ts. src/land.ts takes over with exact map projections once
-      // the map is up.
-      const CENTER = [19, 58.3];
-      const ZOOM = 3.4;
+      // is needed. The initial view math must match src/view.ts fitView().
+      // src/land.ts takes over with exact map projections once the map is up.
+      const BBOX = [6, 52, 34, 67.5];
       const mercX = (lon) => (lon + 180) / 360;
       const mercY = (lat) => {
         const r = (lat * Math.PI) / 180;
         return (1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2;
       };
+      const fitView = (w, h, padding = 24) => {
+        const [minLon, minLat, maxLon, maxLat] = BBOX;
+        const myTop = mercY(maxLat), myBot = mercY(minLat);
+        const zLon = Math.log2(((w - 2 * padding) * 360) / ((maxLon - minLon) * 512));
+        const zLat = Math.log2((h - 2 * padding) / ((myBot - myTop) * 512));
+        const zoom = Math.min(zLon, zLat, 12);
+        const centerLat = (2 * Math.atan(Math.exp(2 * Math.PI * (0.5 - (myTop + (myBot - myTop) / 2)))) - Math.PI / 2) * (180 / Math.PI);
+        return { center: [(minLon + maxLon) / 2, centerLat], zoom };
+      };
+      const VIEW = fitView(window.innerWidth, window.innerHeight);
+      const CENTER = VIEW.center;
+      const ZOOM = VIEW.zoom;
       const project = (lon, lat, w, h) => {
-        const world = 256 * 2 ** ZOOM;
+        const world = 512 * 2 ** ZOOM; // maplibre world is 512 px at zoom 0
         return [
           (mercX(lon) - mercX(CENTER[0])) * world + w / 2,
           (mercY(lat) - mercY(CENTER[1])) * world + h / 2,
@@ -88,7 +98,15 @@
     <div id="map" aria-label="Map of Baltic Sea shipping"><canvas id="land"></canvas></div>
 
     <header class="topbar">
-      <div id="chips" class="chips" role="group" aria-label="Vessel group filter"></div>
+      <!-- static so the text paints with first paint (LCP); ui.ts wires behavior -->
+      <div id="chips" class="chips" role="group" aria-label="Vessel group filter">
+        <button type="button" class="chip" data-group="all" disabled>All</button>
+        <button type="button" class="chip" data-group="tanker" disabled>Tankers</button>
+        <button type="button" class="chip" data-group="cargo" disabled>Cargo</button>
+        <button type="button" class="chip" data-group="ferry" disabled>Ferries/Cruise</button>
+        <button type="button" class="chip" data-group="fishing" disabled>Fishing</button>
+        <button type="button" class="chip" data-group="pleasure" disabled>Pleasure craft</button>
+      </div>
       <nav class="actions" aria-label="Site actions">
         <button id="btn-share" type="button">Share</button>
         <button id="btn-video" type="button" disabled title="Share video arrives with the data release">Video</button>
@@ -112,6 +130,14 @@
       </select>
     </div>
 
-    <div data-footer></div>
+    <footer class="site-footer">
+      <span class="attr">
+        Data: <a href="https://aisdata.ais.dk" rel="noopener">Danish Maritime Authority</a>
+        <span aria-hidden="true">·</span> Land: <a href="https://www.naturalearthdata.com" rel="noopener">Natural Earth</a>
+        <span aria-hidden="true">·</span> Map: <a href="https://maplibre.org" rel="noopener">MapLibre GL JS</a> +
+        <a href="https://deck.gl" rel="noopener">deck.gl</a>
+      </span>
+      <a class="marespot" href="https://marespot.com" rel="noopener">A MareSpot experiment — live Adriatic wind, shelter &amp; sea temperature at marespot.com</a>
+    </footer>
   </body>
 </html>

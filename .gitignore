@@ -5,3 +5,8 @@ baltic-lanes-scaffold.tar.gz
 site/dist/
 site/press/
 site/node_modules/
+
+# Pipeline
+pipeline/.venv/
+__pycache__/
+*.pyc

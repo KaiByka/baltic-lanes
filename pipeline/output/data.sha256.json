@@ -1,0 +1,7 @@
+{
+ "basemap/graticule.geojson": "0444dded60548a36489ec475f4da013c531aa673c7659fcaba9f64b30d057815",
+ "basemap/land.geojson": "a5aaa57b9a74096cb8179050f46cda04b00e80ae436e6dbbe6d02e0b2f8a6308",
+ "density/pleasure.json.zst": "2d9ceff3f9e2a5cbe27fe09d51b1835aca3b65046ac06c496886cee8566ef777",
+ "density/tanker.json.zst": "0d8856cdf11dbe866d81effa0ba3d667be0d93293943922c40fedf254abfee68",
+ "manifest.json": "b648222418d1916db4dc92bb4cfba96ac480ffc1250cafc353e9553f068574d7"
+}

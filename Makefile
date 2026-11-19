@@ -21,8 +21,8 @@ basemap:
 	node site/scripts/build-basemap.mjs
 
 pipeline:
-	@echo "Not implemented yet: see docs/pipeline.md stages 1-6."
-	@exit 1
+	@test -x pipeline/.venv/bin/python || { uv venv pipeline/.venv --python 3.12 && uv pip install --python pipeline/.venv/bin/python -r pipeline/requirements.txt; }
+	pipeline/.venv/bin/python pipeline/run.py
 
 render:
 	@echo "Not implemented yet: see docs/pipeline.md stage 6."

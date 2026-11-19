@@ -1,11 +1,9 @@
 import maplibregl from 'maplibre-gl';
-import { INITIAL_CENTER, INITIAL_ZOOM } from './view';
+import { initialView } from './view';
 
-// Must match BBOX in scripts/build-basemap.mjs (the land underlay covers
-// exactly this bbox).
-const BBOX = { minLon: 6, minLat: 52, maxLon: 34, maxLat: 67.5 };
 
 export function createMap(container: HTMLElement): maplibregl.Map {
+  const view = initialView();
   return new maplibregl.Map({
     container,
     style: {
@@ -19,13 +17,16 @@ export function createMap(container: HTMLElement): maplibregl.Map {
       sources: {},
       layers: [],
     },
-    center: INITIAL_CENTER,
-    zoom: INITIAL_ZOOM,
+    center: view.center,
+    zoom: view.zoom,
     minZoom: 2.5,
     maxZoom: 12,
+    // Wide bounds only: a tight bbox here would force maplibre to zoom in at
+    // init (viewport wider than the bounds at the fitted zoom), pushing
+    // Denmark off screen and breaking the initial fit.
     maxBounds: [
-      [BBOX.minLon - 1.5, BBOX.minLat - 1],
-      [BBOX.maxLon + 1.5, BBOX.maxLat + 1],
+      [-30, 40],
+      [60, 75],
     ],
     attributionControl: false, // attribution lives in the site footer
     dragRotate: false,

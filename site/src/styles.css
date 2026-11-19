@@ -36,15 +36,32 @@ a {
 
 #land {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
+  /* 1 px larger than the map/deck canvases on every side so this underlay
+     stays the Largest Contentful Paint element (it paints early, from the
+     inline script, before the JS bundles arrive). Explicit CSS width/height
+     are required: a canvas is a replaced element and would otherwise fall
+     back to its 300x150 attribute size. */
+  inset: -1px;
+  width: calc(100% + 2px);
+  height: calc(100% + 2px);
   z-index: 0;
   pointer-events: none;
 }
 
 .maplibregl-canvas-container {
   z-index: 1;
+}
+
+/* deck.gl renders into this canvas from a worker (OffscreenCanvas); it sits
+   above the map canvas, below the UI, and never eats pointer events. Sized by
+   CSS like #land but strictly smaller, so #land stays the LCP element. */
+.deckgl-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  pointer-events: none;
 }
 
 /* --- top bar --- */

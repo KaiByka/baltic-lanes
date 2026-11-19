@@ -1,5 +1,5 @@
 import type maplibregl from 'maplibre-gl';
-import { SITE_ROOT, basemap, type Ring } from './view';
+import { SITE_ROOT, basemap, initialView, type Ring } from './view';
 
 // After the MapLibre map exists, redraw the land underlay with exact map
 // projections on every move (the inline script in index.html painted the
@@ -13,7 +13,16 @@ export function attachLand(map: maplibregl.Map, canvas: HTMLCanvasElement): void
   let polys: Ring[][] = [];
   let lines: Ring[] = [];
 
+  // Skip no-op redraws: the inline early-paint script already drew the
+  // initial view, and repainting the (largest) canvas at map-init time would
+  // push Largest Contentful Paint out to when the maplibre bundle finishes.
+  const v0 = initialView();
+  let lastKey = `${v0.center[0].toFixed(6)},${v0.center[1].toFixed(6)},${v0.zoom.toFixed(6)},${canvas.clientWidth}x${canvas.clientHeight}`;
   const draw = () => {
+    const c = map.getCenter();
+    const key = `${c.lng.toFixed(6)},${c.lat.toFixed(6)},${map.getZoom().toFixed(6)},${canvas.clientWidth}x${canvas.clientHeight}`;
+    if (key === lastKey) return;
+    lastKey = key;
     const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
     const w = canvas.clientWidth;
     const h = canvas.clientHeight;

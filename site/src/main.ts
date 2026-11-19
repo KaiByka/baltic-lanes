@@ -1,44 +1,48 @@
 import 'maplibre-gl/dist/maplibre-gl.css';
 import './styles.css';
-import { createMap } from './map';
-import { SITE_ROOT } from './view';
 import { attachLand } from './land';
 import { attachDeck, type DeckHandle } from './deck';
-import { buildLayers } from './layers';
+import { cellsFor, loadManifest } from './data';
 import { initChrome } from './ui';
-import { renderFooter } from './footer';
 import { initAnalytics } from './analytics';
-import { parseHash, type State } from './state';
+import { monthKey, type State } from './state';
 
 initAnalytics();
-renderFooter();
+// Kick off the manifest fetch at module evaluation so every heavy chunk
+// (maplibre, deck.gl worker, density data) is requested strictly after
+// data/manifest.json — the rule that keeps the first-load bundle small.
+const manifestPromise = loadManifest();
 
-const map = createMap(document.getElementById('map')!);
-attachLand(map, document.getElementById('land') as HTMLCanvasElement);
+async function boot(): Promise<void> {
+  const manifest = await manifestPromise;
+  // MapLibre itself is a lazy chunk: the inline early-paint script in
+  // index.html already draws the map, so the 800 kB maplibre bundle parses
+  // off the critical path, after the manifest.
+  const { createMap } = await import('./map');
+  const map = createMap(document.getElementById('map')!);
+  attachLand(map, document.getElementById('land') as HTMLCanvasElement);
 
-// Data manifest: emitted by the pipeline (sprint 2+). Until it exists there is
-// no data to show, so the deck.gl overlay stays unattached and the chrome
-// stays disabled.
-let manifestPromise: Promise<unknown | null> | null = null;
-function fetchManifest(): Promise<unknown | null> {
-  manifestPromise ??= fetch(`${SITE_ROOT}data/manifest.json`)
-    .then((r) => (r.ok ? r.json() : null))
-    .catch(() => null);
-  return manifestPromise;
+  // deck.gl stays out of first load: the overlay attaches only after the data
+  // manifest has been fetched (dynamic import into a worker), then layers are
+  // fed per state.
+  let deckPromise: Promise<DeckHandle> | null = null;
+  const ensureDeck = (): Promise<DeckHandle> => (deckPromise ??= attachDeck(map));
+
+  async function refresh(state: State): Promise<void> {
+    if (!manifest) return; // no data yet
+    const groups = state.group === 'all' ? Object.keys(manifest.groups) : [state.group];
+    // start the deck.gl worker in parallel with the data fetch so its chunk
+    // download/parse overlaps the data worker's decompress
+    const deckP = ensureDeck();
+    const density = await cellsFor(groups, monthKey(state.month));
+    const deck = await deckP;
+    deck.setLayers(density);
+  }
+
+  map.on('load', () => {
+    const state = initChrome(manifest, (s) => void refresh(s));
+    void refresh(state);
+  });
 }
 
-let deckPromise: Promise<DeckHandle> | null = null;
-function ensureDeck(): Promise<DeckHandle> {
-  deckPromise ??= attachDeck(map);
-  return deckPromise;
-}
-
-async function refresh(state: State): Promise<void> {
-  const manifest = await fetchManifest();
-  if (!manifest) return; // no data yet (sprint 1)
-  const deck = await ensureDeck();
-  deck.setLayers(await buildLayers(state));
-}
-
-initChrome((state) => void refresh(state));
-map.on('load', () => void refresh(parseHash()));
+void boot();

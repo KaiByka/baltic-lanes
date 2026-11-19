@@ -1,0 +1,33 @@
+{
+ "grid": {
+  "bbox": [
+   9.0,
+   53.0,
+   31.0,
+   66.0
+  ],
+  "cellMeters": 4000,
+  "ncols": 10019,
+  "worldWidthM": 40075016.68557849
+ },
+ "groups": {
+  "pleasure": {
+   "bytes": 74875,
+   "cells": 27849,
+   "file": "density/pleasure.json.zst"
+  },
+  "tanker": {
+   "bytes": 49406,
+   "cells": 18129,
+   "file": "density/tanker.json.zst"
+  }
+ },
+ "months": [
+  "2024-07"
+ ],
+ "source": {
+  "archive": "http://aisdata.ais.dk/",
+  "license": "aggregates only"
+ },
+ "version": 1
+}
